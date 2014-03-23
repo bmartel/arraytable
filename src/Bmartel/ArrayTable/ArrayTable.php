@@ -20,7 +20,11 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, Serializa
 
     protected $columns;
 
+    protected $columnIds;
+
     protected $metadata;
+
+    protected $name;
 
     public function __construct()
     {
