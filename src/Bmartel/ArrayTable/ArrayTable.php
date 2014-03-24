@@ -26,47 +26,67 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
     protected $name;
 
-    public function __construct(array $columns, $name = null)
+	/**
+	 * @param array $columns
+	 * @param null $name
+	 */
+	public function __construct(array $columns, $name = null)
     {
         $this->name = $name ?: UUID::v4();
         $this->columns = $columns;
         $this->rows = [];
 
+	    $this->updateTableClass();
         $this->updateKeyspace();
-        $this->updateTableClass();
-
     }
 
-    protected function updateKeyspace()
+	/**
+	 * Updates the keyspace to the current table
+	 */
+	protected function updateKeyspace()
     {
-        if($this->tableKeyspaceNeedsUpdate() ||
-           $this->tableClassNeedsUpdate()){
+        if($this->tableKeyspaceNeedsUpdate()){
             $this->generateTableKey();
         }
     }
-    protected function updateTableClass()
+
+	/**
+	 * Updates the table class name to the current executed classname
+	 */
+	protected function updateTableClass()
     {
         if($this->tableClassNeedsUpdate()){
             $this->tableclass = static::getTableClass();
         }
     }
 
-    protected function tableClassNeedsUpdate()
+	/**
+	 * Check the table class has been set
+	 *
+	 * @return bool
+	 */
+	protected function tableClassNeedsUpdate()
     {
         return !isset($this->tableclass);
     }
 
-    protected function tableKeyspaceNeedsUpdate()
+	/**
+	 * Check if the keyspace for the table exists
+	 *
+	 * @return bool
+	 */
+	protected function tableKeyspaceNeedsUpdate()
     {
-        return !isset(static::$keyspace);
+        return !isset(static::$keyspace[$this->tableclass]);
     }
 
     /**
      * Regenerates the overall keyspace for the tables
+     * Ensures no collisions between row keys
      */
     protected function generateTableKey()
     {
-        static::$keyspace = UUID::v4();
+	    static::$keyspace[$this->tableclass] = UUID::v4();
     }
 
     /**
@@ -86,7 +106,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     {
         $tableRow = $this->tableclass.'.'.$this->name .'_'. str_replace(' ','',microtime());
 
-        $key = UUID::v5(static::$keyspace,$tableRow);
+        $key = UUID::v5(static::$keyspace[$this->tableclass],$tableRow);
 
         return $key;
     }

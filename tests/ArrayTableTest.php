@@ -98,10 +98,17 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
     {
         $tableName = 'TableName';
         $arrayTable = new ArrayTable(['id'], $tableName);
+	    $arrayTable2 = new TestTable(['id'], $tableName);
 
         $sampleRowKeys = array_map(function() use($arrayTable){
             return $arrayTable->generateKey();
-        }, range(0,1000));
+        }, range(0,100));
+
+	    $sampleRowKeys2 = array_map(function() use($arrayTable2){
+		    return $arrayTable2->generateKey();
+	    }, range(0,100));
+
+	    $sampleRowKeys = $sampleRowKeys + $sampleRowKeys2;
 
         $this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
     }
