@@ -16,6 +16,8 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 {
     protected static $keyspace;
 
+    protected $tableclass;
+
     protected $rows;
 
     protected $columns;
@@ -30,15 +32,49 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         $this->columns = $columns;
         $this->rows = [];
 
-        if(!isset(static::$keyspace)) static::generateTableKey();
+        $this->updateKeyspace();
+        $this->updateTableClass();
+
+    }
+
+    protected function updateKeyspace()
+    {
+        if($this->tableKeyspaceNeedsUpdate() ||
+           $this->tableClassNeedsUpdate()){
+            $this->generateTableKey();
+        }
+    }
+    protected function updateTableClass()
+    {
+        if($this->tableClassNeedsUpdate()){
+            $this->tableclass = static::getTableClass();
+        }
+    }
+
+    protected function tableClassNeedsUpdate()
+    {
+        return !isset($this->tableclass);
+    }
+
+    protected function tableKeyspaceNeedsUpdate()
+    {
+        return !isset(static::$keyspace);
     }
 
     /**
      * Regenerates the overall keyspace for the tables
      */
-    protected static function generateTableKey()
+    protected function generateTableKey()
     {
         static::$keyspace = UUID::v4();
+    }
+
+    /**
+     * Provide the Object classname
+     */
+    protected static function getTableClass()
+    {
+        return get_called_class();
     }
 
     /**
@@ -48,7 +84,11 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function generateKey()
     {
-        return UUID::v5(static::$keyspace,get_called_class());
+        $tableRow = $this->tableclass.'.'.$this->name .'_'. str_replace(' ','',microtime());
+
+        $key = UUID::v5(static::$keyspace,$tableRow);
+
+        return $key;
     }
     /**
      * Chainable alias of fillRowWithData

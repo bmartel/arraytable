@@ -93,5 +93,17 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
             $arrayTable->toJson()
         );
     }
+
+    public function testUniqueGeneratedRowKeysForTables()
+    {
+        $tableName = 'TableName';
+        $arrayTable = new ArrayTable(['id'], $tableName);
+
+        $sampleRowKeys = array_map(function() use($arrayTable){
+            return $arrayTable->generateKey();
+        }, range(0,1000));
+
+        $this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
+    }
 }
  
