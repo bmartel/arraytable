@@ -5,112 +5,143 @@ use Bmartel\ArrayTable\ArrayTable;
 class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
 
-    public function testCanConstructArrayTable()
-    {
-        $arrayTable = new ArrayTable(['id','name']);
+	public function testCanConstructArrayTable() {
 
-        $this->assertInstanceOf('Bmartel\ArrayTable\ArrayTable', $arrayTable);
-    }
+		$arrayTable = new ArrayTable(['id', 'name']);
 
-    public function testCanConstructArrayTableWithName()
-    {
-        $name = 'AwesomeTable';
-        $arrayTable = new ArrayTable(['id','name'],$name);
+		$this->assertInstanceOf('Bmartel\ArrayTable\ArrayTable', $arrayTable);
+	}
 
-        $this->assertEquals($name, $arrayTable->getTableName());
-    }
+	public function testCanConstructArrayTableWithName() {
 
-    public function testCanAddEmptyRow()
-    {
-        $name = 'AwesomeTable';
-        $row = ['id'=> '', 'name' => ''];
-        $rowKey = 'SomeKey';
+		$name = 'AwesomeTable';
+		$arrayTable = new ArrayTable(['id', 'name'], $name);
 
-        $arrayTable = new ArrayTable(['id','name'],$name);
+		$this->assertEquals($name, $arrayTable->getTableName());
+	}
 
-        $arrayTable->newRow([],$rowKey);
+	public function testCanAddEmptyRow() {
 
-        $this->assertEquals(1, $arrayTable->rowCount());
-        $this->assertEquals($row, $arrayTable[$rowKey]);
-    }
+		$name = 'AwesomeTable';
+		$row = ['id' => '', 'name' => ''];
+		$rowKey = 'SomeKey';
 
-    public function testCanAddRowWithPartialData()
-    {
-        $name = 'AwesomeTable';
-        $rowKey = 'SomeKey';
+		$arrayTable = new ArrayTable(['id', 'name'], $name);
 
-        $arrayTable = new ArrayTable(['id','name'],$name);
-        $arrayTable->newRow(['name' => 'example'],$rowKey);
+		$arrayTable->newRow([], $rowKey);
 
-        $this->assertEquals(['id' => '', 'name'=> 'example'], $arrayTable[$rowKey]);
-    }
+		$this->assertEquals(1, $arrayTable->rowCount());
+		$this->assertEquals($row, $arrayTable[$rowKey]);
+	}
 
-    public function testCanAddRowWithUnorderedPartialData()
-    {
-        $name = 'AwesomeTable';
-        $rowKey = 'SomeKey';
+	public function testCanAddRowWithPartialData() {
 
-        $arrayTable = new ArrayTable(['id','name','email'],$name);
-        $arrayTable->newRow(['name' => 'example', 'id' => 23423], $rowKey);
+		$name = 'AwesomeTable';
+		$rowKey = 'SomeKey';
 
-        $this->assertEquals(['id' => 23423, 'name'=> 'example', 'email' => ''], $arrayTable[$rowKey]);
-    }
+		$arrayTable = new ArrayTable(['id', 'name'], $name);
+		$arrayTable->newRow(['name' => 'example'], $rowKey);
 
-    public function testCanAddRowWithSequentialData()
-    {
-        $name = 'AwesomeTable';
-        $rowKey = 'SomeKey';
+		$this->assertEquals(['id' => '', 'name' => 'example'], $arrayTable[$rowKey]);
+	}
 
-        $arrayTable = new ArrayTable(['id','name','email'],$name);
-        $arrayTable->newRow([23423, 'example'], $rowKey);
+	public function testCanAddRowWithUnorderedPartialData() {
 
-        $this->assertEquals(['id' => 23423, 'name'=> 'example', 'email' => ''], $arrayTable[$rowKey]);
-    }
+		$name = 'AwesomeTable';
+		$rowKey = 'SomeKey';
 
-    /**
-     *  @expectedException \Bmartel\ArrayTable\Exceptions\RowDataException
-     */
-    public function testExceptionWhenAttemptingToAddRowWithNonExistentDataOffset()
-    {
-        $name = 'AwesomeTable';
+		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+		$arrayTable->newRow(['name' => 'example', 'id' => 23423], $rowKey);
 
-        $arrayTable = new ArrayTable(['id','name','email'],$name);
-        $arrayTable->newRow([23423, 'example', 'more data', 'too much data', 'way too much data']);
-    }
+		$this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
+	}
 
-    public function testTableSerializesToJson()
-    {
-        $name = 'AwesomeTable';
-        $rowKey = 'SomeKey';
+	public function testCanAddRowWithSequentialData() {
 
-        $arrayTable = new ArrayTable(['id','name','email'],$name);
-        $arrayTable->newRow([23423, 'Jim Jones', 'j.jones@email.com'],$rowKey);
+		$name = 'AwesomeTable';
+		$rowKey = 'SomeKey';
 
-        $this->assertEquals(
-            '{"metadata":{"name":"AwesomeTable"},'.
-            '"columns":["id","name","email"],'.
-            '"data":{"'.$rowKey.'":{"id":23423,"name":"Jim Jones","email":"j.jones@email.com"}}}',
-            $arrayTable->toJson()
-        );
-    }
+		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+		$arrayTable->newRow([23423, 'example'], $rowKey);
 
-    public function testUniqueGeneratedRowKeysForTables()
-    {
-        $tableName = 'TableName';
-        $arrayTable = new ArrayTable(['id'], $tableName);
-	    $arrayTable2 = new TestTable(['id'], $tableName);
+		$this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
+	}
 
-        $sampleRowKeys = array_map(function() use($arrayTable){
-            return $arrayTable->generateKey();
-        }, range(0,100));
+	/**
+	 * @expectedException \Bmartel\ArrayTable\Exceptions\RowDataException
+	 */
+	public function testExceptionWhenAttemptingToAddRowWithNonExistentDataOffset() {
 
-	    $sampleRowKeys2 = array_map(function() use($arrayTable2){
-		    return $arrayTable2->generateKey();
-	    }, range(0,100));
+		$name = 'AwesomeTable';
 
-	    $sampleRowKeys = $sampleRowKeys + $sampleRowKeys2;
+		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+		$arrayTable->newRow([23423, 'example', 'more data', 'too much data', 'way too much data']);
+	}
 
-        $this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
-    }
+	public function testTableSerializesToJson() {
+
+		$name = 'AwesomeTable';
+		$rowKey = 'SomeKey';
+
+		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+		$arrayTable->newRow([23423, 'Jim Jones', 'j.jones@email.com'], $rowKey);
+
+		$this->assertEquals(
+			'{"metadata":{"name":"AwesomeTable"},' .
+			'"columns":["id","name","email"],' .
+			'"data":{"' . $rowKey . '":{"id":23423,"name":"Jim Jones","email":"j.jones@email.com"}}}',
+			$arrayTable->toJson()
+		);
+	}
+
+	public function testUniqueGeneratedRowKeysForTables() {
+
+		$tableName = 'TableName';
+		$arrayTable = new ArrayTable(['id'], $tableName);
+		$arrayTable2 = new TestTable(['id'], $tableName);
+
+		$sampleRowKeys = array_map(function () use ($arrayTable) {
+
+			return $arrayTable->generateKey();
+		}, range(0, 100));
+
+		$sampleRowKeys2 = array_map(function () use ($arrayTable2) {
+
+			return $arrayTable2->generateKey();
+		}, range(0, 100));
+
+		$sampleRowKeys = $sampleRowKeys + $sampleRowKeys2;
+
+		$this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
+	}
+
+	public function testPopulateGetsDynamicArgumentsAndCombinesParallelArrays() {
+
+		$columns = ['id', 'first_name', 'last_name'];
+		$ids = [1, 2];
+		$firstNames = ['Bob', 'Tim'];
+		$lastNames = ['Dylan', 'Mcgraw'];
+
+		$expectedResult = [
+			['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
+			['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+		];
+		$arrayTable = ArrayTable::make($columns)->populate($ids, $firstNames, $lastNames);
+
+		$this->assertEquals($expectedResult, $arrayTable->getRows());
+	}
+
+	/**
+	 * @expectedException \InvalidArgumentException
+	 */
+	public function testPopulateThrowsInvalidArgumentExceptionWithIncorrectArgumentCount() {
+
+		$columns = ['id', 'first_name', 'last_name'];
+
+		$firstNames = ['Bob', 'Tim'];
+		$lastNames = ['Dylan', 'Mcgraw'];
+
+		ArrayTable::make($columns)->populate($firstNames, $lastNames);
+	}
 }
  
