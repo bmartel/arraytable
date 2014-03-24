@@ -5,11 +5,7 @@ use Closure;
 use Countable;
 use ArrayAccess;
 use ArrayIterator;
-use CachingIterator;
 use IteratorAggregate;
-use Mockery\Generator\Parameter;
-use Traversable;
-use Serializable;
 use JsonSerializable;
 
 /**
