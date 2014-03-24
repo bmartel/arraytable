@@ -20,7 +20,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($name, $arrayTable->getTableName());
     }
 
-    public function testCanAddBlankRow()
+    public function testCanAddEmptyRow()
     {
         $name = 'AwesomeTable';
         $row = ['id'=> '', 'name' => ''];
@@ -34,7 +34,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($row, $arrayTable[$rowKey]);
     }
 
-    public function testCanAddPartialDataRow()
+    public function testCanAddRowWithPartialData()
     {
         $name = 'AwesomeTable';
         $rowKey = 'SomeKey';
