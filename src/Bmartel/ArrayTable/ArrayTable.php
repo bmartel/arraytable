@@ -1,11 +1,13 @@
 <?php namespace Bmartel\ArrayTable;
 
+use Bmartel\ArrayTable\Exceptions\RowDataException;
 use Closure;
 use Countable;
 use ArrayAccess;
 use ArrayIterator;
 use CachingIterator;
 use IteratorAggregate;
+use Mockery\Generator\Parameter;
 use Traversable;
 use Serializable;
 use JsonSerializable;
@@ -14,146 +16,315 @@ use JsonSerializable;
  * Class ArrayTable
  * @package Bmartel\ArrayTable
  */
-class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, Serializable, JsonSerializable{
+class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable
+{
+    protected static $keyspace;
 
     protected $rows;
 
     protected $columns;
 
-    protected $columnIds;
-
     protected $metadata;
 
     protected $name;
 
-    public function __construct()
+    public function __construct(array $columns, $name = null)
+    {
+        $this->name = $name ?: UUID::v4();
+        $this->columns = $columns;
+        $this->rows = [];
+
+        if(!isset(static::$keyspace)) static::generateTableKey();
+    }
+
+    /**
+     * Regenerates the overall keyspace for the tables
+     */
+    protected static function generateTableKey()
+    {
+        static::$keyspace = UUID::v4();
+    }
+
+    /**
+     * Generates a new key for the current table
+     *
+     * @return bool|string
+     */
+    public function generateKey()
+    {
+        return UUID::v5(static::$keyspace,get_called_class());
+    }
+    /**
+     * Chainable alias of fillRowWithData
+     *
+     * @param array $rowData
+     * @param null $rowKey
+     * @return $this
+     */
+    public function newRow(array $rowData = [], $rowKey = null)
+    {
+        $this->fillRowWithData($rowData, $rowKey);
+
+        return $this;
+    }
+
+    /**
+     * Alias for countable method count()
+     *
+     * @return int
+     */
+    public function rowCount()
+    {
+        return $this->count();
+    }
+
+    public function get()
     {
 
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Retrieve an external iterator
-     * @link http://php.net/manual/en/iteratoraggregate.getiterator.php
-     * @return Traversable An instance of an object implementing <b>Iterator</b> or
-     * <b>Traversable</b>
+     * Perform a callback on each row
+     *
+     * @param callable $callback
+     * @return $this
+     */
+    public function each(Closure $callback)
+    {
+        array_map($callback, $this->rows);
+
+        return $this;
+    }
+
+    /**
+     * Retrieve the current name of the table
+     *
+     * @return string
+     */
+    public function getTableName()
+    {
+        return $this->name;
+    }
+
+    /**
+     * Fill a row with data
+     *
+     * @param array $rowData
+     * @param null $rowKey
+     */
+    public function fillRowWithData(array $rowData = [], $rowKey = null)
+    {
+        // Cut a blank row
+        $newRow = $this->newEmptyRow($rowKey);
+
+        // Return if the row requires no data
+        if(empty($rowData)) return;
+
+        // Ensure the data array is able to fill the row
+        $this->ableToFillRow($rowData);
+
+        // Fill the data according to the fields specified
+        if ($this->hasColumnKeys($rowData)) {
+            $this->fillRow($newRow,$rowData);
+        }
+
+        // Treat the array as sequential values, populate data in the order it was declared
+        else {
+            $this->fillRowFromRaw($newRow,$rowData);
+        }
+    }
+
+    /**
+     * Creates a new empty row
+     */
+    protected function newEmptyRow($rowKey = null)
+    {
+
+        $rowKey = $rowKey ?: $this->generateKey();
+
+        $this->rows[$rowKey] = array_fill_keys($this->columns,'');
+
+        return $rowKey;
+    }
+
+    /**
+     * Fill row data from a column-keyed associative array
+     *
+     * @param $rowKey
+     * @param array $data
+     */
+    protected function fillRow($rowKey, array $data)
+    {
+        $row = $this->getRowByKey($rowKey);
+
+        $filled = array_intersect_key($data,$row);
+
+        $this->rows[$rowKey] = array_merge($row, $filled);
+
+    }
+
+    /**
+     * Fill row data from a sequential array
+     *
+     * @param $rowKey
+     * @param array $data
+     */
+    protected function fillRowFromRaw($rowKey, array $data)
+    {
+        $data = array_combine(array_slice($this->columns,0,count($data)),array_values($data));
+
+        $this->fillRow($rowKey, $data);
+    }
+
+    /**
+     * Retrieve the row by its key
+     *
+     * @param $key
+     * @return null
+     */
+    public function getRowByKey($key)
+    {
+        if($this->offsetExists($key)) return $this->rows[$key];
+
+        return null;
+    }
+
+    /**
+     * Determine if the row can be filled by the data array
+     *
+     * @param array $data
+     * @return bool
+     * @throws Exceptions\RowDataException
+     */
+    protected function ableToFillRow(array $data)
+    {
+        $result = count($data) <= count($this->columns);
+
+        if(!$result) throw new RowDataException('Row offset does not exist.');
+
+        return $result;
+    }
+
+    /**
+     * Determine if the data array keys exist as column names in the table
+     *
+     * @param array $data
+     * @return bool
+     */
+    public function hasColumnKeys(array $data)
+    {
+        return count($data) === count(array_intersect(array_keys($data), $this->columns));
+    }
+
+    /**
+     * Retrieve the table metadata
+     *
+     * @return array
+     */
+    public function getMetaData()
+    {
+        if(!isset($this->metadata['name'])) $this->metadata['name'] = $this->name;
+
+        return ['metadata' => $this->metadata];
+    }
+
+    public function exportTable()
+    {
+        return $this->getMetaData() + ['columns' => $this->columns] + ['data' => $this->rows];
+    }
+
+    /**
+     * Get an iterator for the rows.
+     *
+     * @return ArrayIterator
      */
     public function getIterator()
     {
-        // TODO: Implement getIterator() method.
+        return new ArrayIterator($this->rows);
     }
 
     /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Whether a offset exists
-     * @link http://php.net/manual/en/arrayaccess.offsetexists.php
-     * @param mixed $offset <p>
-     * An offset to check for.
-     * </p>
-     * @return boolean true on success or false on failure.
-     * </p>
-     * <p>
-     * The return value will be casted to boolean if non-boolean was returned.
-     */
-    public function offsetExists($offset)
-    {
-        // TODO: Implement offsetExists() method.
-    }
-
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to retrieve
-     * @link http://php.net/manual/en/arrayaccess.offsetget.php
-     * @param mixed $offset <p>
-     * The offset to retrieve.
-     * </p>
-     * @return mixed Can return all value types.
-     */
-    public function offsetGet($offset)
-    {
-        // TODO: Implement offsetGet() method.
-    }
-
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to set
-     * @link http://php.net/manual/en/arrayaccess.offsetset.php
-     * @param mixed $offset <p>
-     * The offset to assign the value to.
-     * </p>
-     * @param mixed $value <p>
-     * The value to set.
-     * </p>
-     * @return void
-     */
-    public function offsetSet($offset, $value)
-    {
-        // TODO: Implement offsetSet() method.
-    }
-
-    /**
-     * (PHP 5 &gt;= 5.0.0)<br/>
-     * Offset to unset
-     * @link http://php.net/manual/en/arrayaccess.offsetunset.php
-     * @param mixed $offset <p>
-     * The offset to unset.
-     * </p>
-     * @return void
-     */
-    public function offsetUnset($offset)
-    {
-        // TODO: Implement offsetUnset() method.
-    }
-
-    /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
-     * Count elements of an object
-     * @link http://php.net/manual/en/countable.count.php
-     * @return int The custom count as an integer.
-     * </p>
-     * <p>
-     * The return value is cast to an integer.
+     * Count the number of items in the collection.
+     *
+     * @return int
      */
     public function count()
     {
-        // TODO: Implement count() method.
+        return count($this->rows);
     }
 
     /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
-     * String representation of object
-     * @link http://php.net/manual/en/serializable.serialize.php
-     * @return string the string representation of the object or null
+     * Determine if a row exists at an offset.
+     *
+     * @param  mixed  $key
+     * @return bool
      */
-    public function serialize()
+    public function offsetExists($key)
     {
-        // TODO: Implement serialize() method.
+        return array_key_exists($key, $this->rows);
+    }
+
+
+    /**
+     * Get a row at a given offset.
+     *
+     * @param  mixed  $key
+     * @return mixed
+     */
+    public function offsetGet($key)
+    {
+        return $this->rows[$key];
     }
 
     /**
-     * (PHP 5 &gt;= 5.1.0)<br/>
-     * Constructs the object
-     * @link http://php.net/manual/en/serializable.unserialize.php
-     * @param string $serialized <p>
-     * The string representation of the object.
-     * </p>
+     * Set the row at a given offset.
+     *
+     * @param  mixed  $key
+     * @param  mixed  $value
      * @return void
      */
-    public function unserialize($serialized)
+    public function offsetSet($key, $value)
     {
-        // TODO: Implement unserialize() method.
+        if (is_null($key))
+        {
+            $this->rows[] = $value;
+        }
+        else
+        {
+            $this->rows[$key] = $value;
+        }
     }
 
     /**
-     * (PHP 5 &gt;= 5.4.0)<br/>
-     * Specify data which should be serialized to JSON
-     * @link http://php.net/manual/en/jsonserializable.jsonserialize.php
-     * @return mixed data which can be serialized by <b>json_encode</b>,
-     * which is a value of any type other than a resource.
+     * Unset the row at a given offset.
+     *
+     * @param  string  $key
+     * @return void
+     */
+    public function offsetUnset($key)
+    {
+        unset($this->rows[$key]);
+    }
+
+    /**
+     * Get the table as JSON.
+     *
+     * @param  int  $options
+     * @return string
+     */
+    public function toJson($options = 0)
+    {
+        return json_encode($this->exportTable(), $options);
+    }
+
+    /**
+     * Set the table data to be serialized as JSON
+     *
+     * @return array|mixed
      */
     public function jsonSerialize()
     {
-        // TODO: Implement jsonSerialize() method.
+        return $this->exportTable();
     }
 
 
