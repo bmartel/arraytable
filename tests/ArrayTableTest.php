@@ -1,16 +1,6 @@
-<?php
-/**
- * Created by PhpStorm.
- * User: brand_000
- * Date: 23/03/14
- * Time: 3:05 PM
- */
-
-namespace Bmartel\ArrayTable\Tests;
-
+<?php namespace Bmartel\ArrayTable\Tests;
 
 use Bmartel\ArrayTable\ArrayTable;
-use Bmartel\ArrayTable\UUID;
 
 class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
