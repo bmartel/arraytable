@@ -225,12 +225,12 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     {
         if(!isset($this->metadata['name'])) $this->metadata['name'] = $this->name;
 
-        return ['metadata' => $this->metadata];
+        return $this->metadata;
     }
 
     public function exportTable()
     {
-        return $this->getMetaData() + ['columns' => $this->columns] + ['data' => $this->rows];
+        return ['metadata' => $this->getMetaData()] + ['columns' => $this->columns] + ['data' => $this->rows];
     }
 
     /**
