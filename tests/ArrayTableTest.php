@@ -143,5 +143,15 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
 		ArrayTable::make($columns)->populate($firstNames, $lastNames);
 	}
+
+    public function testCanSearchRowsByField()
+    {
+
+    }
+
+    public function testCanDeleteRow()
+    {
+
+    }
 }
  
