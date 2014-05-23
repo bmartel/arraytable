@@ -4,6 +4,23 @@ use Bmartel\ArrayTable\ArrayTable;
 
 class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
+    /**
+     * @var \Bmartel\ArrayTable\ArrayTable
+     */
+    protected $table;
+
+    public function setUp() {
+        $columns = ['id', 'first_name', 'last_name'];
+        $ids = [1, 2];
+        $firstNames = ['Bob', 'Tim'];
+        $lastNames = ['Dylan', 'Mcgraw'];
+
+        $this->table = ArrayTable::make($columns)->populate($ids, $firstNames, $lastNames);
+    }
+
+    public function tearDown() {
+
+    }
 
 	public function testCanConstructArrayTable() {
 
@@ -117,18 +134,12 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
 	public function testPopulateGetsDynamicArgumentsAndCombinesParallelArrays() {
 
-		$columns = ['id', 'first_name', 'last_name'];
-		$ids = [1, 2];
-		$firstNames = ['Bob', 'Tim'];
-		$lastNames = ['Dylan', 'Mcgraw'];
-
 		$expectedResult = [
 			['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
 			['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
 		];
-		$arrayTable = ArrayTable::make($columns)->populate($ids, $firstNames, $lastNames);
 
-		$this->assertEquals($expectedResult, $arrayTable->getRows());
+		$this->assertEquals($expectedResult, $this->table->getRows());
 	}
 
 	/**
@@ -146,6 +157,76 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
     public function testCanSearchRowsByField()
     {
+        $expectedResult = [
+            'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
+        ];
+
+        $searchResults = $this->table->where(function($rowId, $row, $table){
+            return ($row['id'] === 2);
+        })->get();
+
+        // Make sure to only look at the first value
+        $searchResults = current(array_values($searchResults));
+
+        $this->assertEquals($expectedResult['id'], $searchResults['id']);
+    }
+
+    public function testCanSearchRowsByMultipleFields()
+    {
+        $expectedResult = [
+            'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
+        ];
+
+        $searchResults = $this->table->where(function($rowId, $row, $table){
+            return $row['id'] === 2 || $row['first_name'] === 'Bob';
+        })->get();
+
+        $this->assertCount(2, $searchResults);
+    }
+
+    public function testCanUpdateARow() {
+
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Jimbo', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+        ];
+
+        $this->table->where(function($rowId, $row, $table){
+
+            if($row['id'] === 1) {
+                $table->updateRow($rowId, ['first_name'=> 'Jimbo']);
+            }
+
+        });
+
+        $this->assertEquals($expectedResult, $this->table->getRows());
+    }
+
+    public function testCanUpdateAllRows() {
+
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'joe', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'joe', 'last_name' => 'Mcgraw']
+        ];
+
+        $updated = $this->table->updateAll(['first_name' => 'joe']);
+
+        $this->assertEquals(2, $updated);
+        $this->assertEquals($expectedResult, $this->table->getRows());
+
+    }
+
+    public function testWillNotUpdateValueIfItIsTheSame() {
+
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Tim', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+        ];
+
+        $updated = $this->table->updateAll(['first_name' => 'Tim']);
+
+        $this->assertEquals(1, $updated);
+        $this->assertEquals($expectedResult, $this->table->getRows());
 
     }
 

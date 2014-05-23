@@ -218,30 +218,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         return count($this->get());
     }
 
-//    protected function traverse($field, $row, $stack) {
-//        foreach ($stack as $k => $v) {
-//            if (is_array($v)) {
-//                // If the current element of the array is an array, re-curse it and capture the return
-//                $return = $this->traverse($row, $v);
-//
-//                // If the return is an array, stack it and return it
-//                if (is_array($return)) {
-//                    return array($k => $return);
-//                }
-//            } else {
-//                // Since we are not on an array, compare directly
-//                if ($v === $row) {
-//                    // And if we match, stack it and return it
-//                    return array($k => $row);
-//                }
-//            }
-//        }
-//
-//        // Return false since there was nothing found
-//        return false;
-//    }
-//
-
     /**
      * Resets the search results and search condition.
      */
@@ -270,7 +246,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     /**
      * Perform a query on the row data
      *
-     * @param $array
      * @param callable $callback
      * @return $this
      */
@@ -278,12 +253,9 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     {
         $this->resetSearchResults();
 
-        foreach ($this->rows as $key => $value)
+        foreach ($this->rows as $key => $row)
         {
-            foreach ($value as $column => $field){
-                if (call_user_func($callback, $column, $field)) $this->searchResults[$key] = $value;
-            }
-
+            if (call_user_func($callback, $key, $row, $this)) $this->searchResults[$key] = $row;
         }
 
         return $this;
@@ -304,22 +276,60 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     }
 
     /**
-     * Update the resultset
+     * Update the entire table
      *
-     * @return array
+     * @param array $criteria
+     * @return array|int
      */
-    public function update(array $criteria)
+    public function updateAll(array $criteria)
     {
         $rowsToUpdate = $this->get();
 
-        $rowsUpdated = [];
+        $rowsUpdated = 0;
 
         foreach($rowsToUpdate as $key => $value) {
 
-            $rowsUpdated[]= $this->rows[$key] = array_merge($value, array_intersect_key($criteria, $value));
+            $updatedFields = $this->updateRow($key, $criteria);
+            if((bool) $updatedFields) $rowsUpdated++;
         }
 
-        return count($rowsUpdated);
+        return $rowsUpdated;
+    }
+
+    /**
+     * Performs an update to a table row. Returns the amount of fields updated.
+     *
+     * @param $rowId
+     * @param array $criteria
+     * @return int
+     */
+    public function updateRow($rowId, array $criteria) {
+
+        $updatedRow = 0;
+        $row  = $this->getRowByKey($rowId);
+
+        if($row){
+            // Ensure the keyed array matches columns found on the table
+            if($this->hasColumnKeys($criteria)) {
+                $updatedRow = $this->updateRowFields($rowId, $criteria);
+            }
+        }
+
+        return $updatedRow;
+    }
+
+    /**
+     * Perform the actual update on the table row.
+     *
+     * @param $rowId
+     * @param array $fields
+     * @return int
+     */
+    protected function updateRowFields($rowId, array $fields) {
+        $oldRowValues = $this->rows[$rowId];
+        $this->rows[$rowId] = array_merge($oldRowValues, array_intersect_key($fields, $oldRowValues));
+
+        return count(array_diff_assoc($this->rows[$rowId], $oldRowValues));
     }
 
     /**
@@ -414,6 +424,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      *
      * @param $rowKey
      * @param array $data
+     * @return null
      */
     protected function fillRow($rowKey, array $data)
     {
