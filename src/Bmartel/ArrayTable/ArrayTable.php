@@ -486,6 +486,22 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     }
 
     /**
+     * Delete a row from the table
+     */
+    public function deleteRow($rowId) {
+        $rowDeleted = false;
+
+        $row = $this->getRowByKey($rowId);
+
+        if($row) {
+            unset($this->rows[$rowId]);
+            $rowDeleted = true;
+        }
+
+        return $rowDeleted;
+    }
+
+    /**
      * Determine if the row can be filled by the data array
      *
      * @param array $data

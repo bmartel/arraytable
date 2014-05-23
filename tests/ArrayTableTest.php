@@ -232,7 +232,16 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
     public function testCanDeleteRow()
     {
+        $expectedResult = [
+            'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
+        ];
 
+        $this->table->where(function($rowId, $row, $table){
+            ($row['last_name'] === 'Dylan') && $table->deleteRow($rowId);
+        });
+
+        $this->assertEquals($expectedResult, array_values($this->table->getRows())[0]);
+        $this->assertCount(1,$this->table->getRows());
     }
 }
  
