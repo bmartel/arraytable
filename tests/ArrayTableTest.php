@@ -2,14 +2,16 @@
 
 use Bmartel\ArrayTable\ArrayTable;
 
-class ArrayTableTest extends \PHPUnit_Framework_TestCase {
+class ArrayTableTest extends \PHPUnit_Framework_TestCase
+{
 
     /**
      * @var \Bmartel\ArrayTable\ArrayTable
      */
     protected $table;
 
-    public function setUp() {
+    public function setUp()
+    {
         $columns = ['id', 'first_name', 'last_name'];
         $ids = [1, 2];
         $firstNames = ['Bob', 'Tim'];
@@ -18,142 +20,154 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->table = ArrayTable::make($columns)->populate($ids, $firstNames, $lastNames);
     }
 
-    public function tearDown() {
+    public function tearDown()
+    {
 
     }
 
-	public function testCanConstructArrayTable() {
+    public function testCanConstructArrayTable()
+    {
 
-		$arrayTable = new ArrayTable(['id', 'name']);
+        $arrayTable = new ArrayTable(['id', 'name']);
 
-		$this->assertInstanceOf('Bmartel\ArrayTable\ArrayTable', $arrayTable);
-	}
+        $this->assertInstanceOf('Bmartel\ArrayTable\ArrayTable', $arrayTable);
+    }
 
-	public function testCanConstructArrayTableWithName() {
+    public function testCanConstructArrayTableWithName()
+    {
 
-		$name = 'AwesomeTable';
-		$arrayTable = new ArrayTable(['id', 'name'], $name);
+        $name = 'AwesomeTable';
+        $arrayTable = new ArrayTable(['id', 'name'], $name);
 
-		$this->assertEquals($name, $arrayTable->getTableName());
-	}
+        $this->assertEquals($name, $arrayTable->getTableName());
+    }
 
-	public function testCanAddEmptyRow() {
+    public function testCanAddEmptyRow()
+    {
 
-		$name = 'AwesomeTable';
-		$row = ['id' => '', 'name' => ''];
-		$rowKey = 'SomeKey';
+        $name = 'AwesomeTable';
+        $row = ['id' => '', 'name' => ''];
+        $rowKey = 'SomeKey';
 
-		$arrayTable = new ArrayTable(['id', 'name'], $name);
+        $arrayTable = new ArrayTable(['id', 'name'], $name);
 
-		$arrayTable->newRow([], $rowKey);
+        $arrayTable->newRow([], $rowKey);
 
-		$this->assertEquals(1, $arrayTable->rowCount());
-		$this->assertEquals($row, $arrayTable[$rowKey]);
-	}
+        $this->assertEquals(1, $arrayTable->rowCount());
+        $this->assertEquals($row, $arrayTable[$rowKey]);
+    }
 
-	public function testCanAddRowWithPartialData() {
+    public function testCanAddRowWithPartialData()
+    {
 
-		$name = 'AwesomeTable';
-		$rowKey = 'SomeKey';
+        $name = 'AwesomeTable';
+        $rowKey = 'SomeKey';
 
-		$arrayTable = new ArrayTable(['id', 'name'], $name);
-		$arrayTable->newRow(['name' => 'example'], $rowKey);
+        $arrayTable = new ArrayTable(['id', 'name'], $name);
+        $arrayTable->newRow(['name' => 'example'], $rowKey);
 
-		$this->assertEquals(['id' => '', 'name' => 'example'], $arrayTable[$rowKey]);
-	}
+        $this->assertEquals(['id' => '', 'name' => 'example'], $arrayTable[$rowKey]);
+    }
 
-	public function testCanAddRowWithUnorderedPartialData() {
+    public function testCanAddRowWithUnorderedPartialData()
+    {
 
-		$name = 'AwesomeTable';
-		$rowKey = 'SomeKey';
+        $name = 'AwesomeTable';
+        $rowKey = 'SomeKey';
 
-		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
-		$arrayTable->newRow(['name' => 'example', 'id' => 23423], $rowKey);
+        $arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+        $arrayTable->newRow(['name' => 'example', 'id' => 23423], $rowKey);
 
-		$this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
-	}
+        $this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
+    }
 
-	public function testCanAddRowWithSequentialData() {
+    public function testCanAddRowWithSequentialData()
+    {
 
-		$name = 'AwesomeTable';
-		$rowKey = 'SomeKey';
+        $name = 'AwesomeTable';
+        $rowKey = 'SomeKey';
 
-		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
-		$arrayTable->newRow([23423, 'example'], $rowKey);
+        $arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+        $arrayTable->newRow([23423, 'example'], $rowKey);
 
-		$this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
-	}
+        $this->assertEquals(['id' => 23423, 'name' => 'example', 'email' => ''], $arrayTable[$rowKey]);
+    }
 
-	/**
-	 * @expectedException \Bmartel\ArrayTable\Exceptions\RowDataException
-	 */
-	public function testExceptionWhenAttemptingToAddRowWithNonExistentDataOffset() {
+    /**
+     * @expectedException \Bmartel\ArrayTable\Exceptions\RowDataException
+     */
+    public function testExceptionWhenAttemptingToAddRowWithNonExistentDataOffset()
+    {
 
-		$name = 'AwesomeTable';
+        $name = 'AwesomeTable';
 
-		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
-		$arrayTable->newRow([23423, 'example', 'more data', 'too much data', 'way too much data']);
-	}
+        $arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+        $arrayTable->newRow([23423, 'example', 'more data', 'too much data', 'way too much data']);
+    }
 
-	public function testTableSerializesToJson() {
+    public function testTableSerializesToJson()
+    {
 
-		$name = 'AwesomeTable';
-		$rowKey = 'SomeKey';
+        $name = 'AwesomeTable';
+        $rowKey = 'SomeKey';
 
-		$arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
-		$arrayTable->newRow([23423, 'Jim Jones', 'j.jones@email.com'], $rowKey);
+        $arrayTable = new ArrayTable(['id', 'name', 'email'], $name);
+        $arrayTable->newRow([23423, 'Jim Jones', 'j.jones@email.com'], $rowKey);
 
-		$this->assertEquals(
-			'{"metadata":{"name":"AwesomeTable"},' .
-			'"columns":["id","name","email"],' .
-			'"data":{"' . $rowKey . '":{"id":23423,"name":"Jim Jones","email":"j.jones@email.com"}}}',
-			$arrayTable->toJson()
-		);
-	}
+        $this->assertEquals(
+            '{"metadata":{"name":"AwesomeTable"},' .
+            '"columns":["id","name","email"],' .
+            '"data":{"' . $rowKey . '":{"id":23423,"name":"Jim Jones","email":"j.jones@email.com"}}}',
+            $arrayTable->toJson()
+        );
+    }
 
-	public function testUniqueGeneratedRowKeysForTables() {
+    public function testUniqueGeneratedRowKeysForTables()
+    {
 
-		$tableName = 'TableName';
-		$arrayTable = new ArrayTable(['id'], $tableName);
-		$arrayTable2 = new TestTable(['id'], $tableName);
+        $tableName = 'TableName';
+        $arrayTable = new ArrayTable(['id'], $tableName);
+        $arrayTable2 = new TestTable(['id'], $tableName);
 
-		$sampleRowKeys = array_map(function () use ($arrayTable) {
+        $sampleRowKeys = array_map(function () use ($arrayTable) {
 
-			return $arrayTable->generateKey();
-		}, range(0, 100));
+            return $arrayTable->generateKey();
+        }, range(0, 100));
 
-		$sampleRowKeys2 = array_map(function () use ($arrayTable2) {
+        $sampleRowKeys2 = array_map(function () use ($arrayTable2) {
 
-			return $arrayTable2->generateKey();
-		}, range(0, 100));
+            return $arrayTable2->generateKey();
+        }, range(0, 100));
 
-		$sampleRowKeys = $sampleRowKeys + $sampleRowKeys2;
+        $sampleRowKeys = $sampleRowKeys + $sampleRowKeys2;
 
-		$this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
-	}
+        $this->assertEquals(count(array_unique($sampleRowKeys)), count($sampleRowKeys));
+    }
 
-	public function testPopulateGetsDynamicArgumentsAndCombinesParallelArrays() {
+    public function testPopulateGetsDynamicArgumentsAndCombinesParallelArrays()
+    {
 
-		$expectedResult = [
-			['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
-			['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
-		];
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+        ];
 
-		$this->assertEquals($expectedResult, $this->table->getRows());
-	}
+        $this->assertEquals($expectedResult, $this->table->getRows());
+    }
 
-	/**
-	 * @expectedException \InvalidArgumentException
-	 */
-	public function testPopulateThrowsInvalidArgumentExceptionWithIncorrectArgumentCount() {
+    /**
+     * @expectedException \InvalidArgumentException
+     */
+    public function testPopulateThrowsInvalidArgumentExceptionWithIncorrectArgumentCount()
+    {
 
-		$columns = ['id', 'first_name', 'last_name'];
+        $columns = ['id', 'first_name', 'last_name'];
 
-		$firstNames = ['Bob', 'Tim'];
-		$lastNames = ['Dylan', 'Mcgraw'];
+        $firstNames = ['Bob', 'Tim'];
+        $lastNames = ['Dylan', 'Mcgraw'];
 
-		ArrayTable::make($columns)->populate($firstNames, $lastNames);
-	}
+        ArrayTable::make($columns)->populate($firstNames, $lastNames);
+    }
 
     public function testCanSearchRowsByField()
     {
@@ -161,7 +175,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
             'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
         ];
 
-        $searchResults = $this->table->where(function($rowId, $row, $table){
+        $searchResults = $this->table->where(function ($rowId, $row, $table) {
             return ($row['id'] === 2);
         })->get();
 
@@ -173,14 +187,15 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
     public function testCanSearchRowsByMultipleFields()
     {
-        $searchResults = $this->table->where(function($rowId, $row, $table){
+        $searchResults = $this->table->where(function ($rowId, $row, $table) {
             return $row['id'] === 2 || $row['first_name'] === 'Bob';
         })->get();
 
         $this->assertCount(2, $searchResults);
     }
 
-    public function testCanGetFirstRow() {
+    public function testCanGetFirstRow()
+    {
         $expectedResult = [
             ['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan']
         ];
@@ -188,7 +203,8 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($expectedResult, array_values($this->table->first()));
     }
 
-    public function testCanGetLastRow() {
+    public function testCanGetLastRow()
+    {
         $expectedResult = [
             ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
         ];
@@ -196,17 +212,18 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($expectedResult, array_values($this->table->last()));
     }
 
-    public function testCanUpdateARow() {
+    public function testCanUpdateARow()
+    {
 
         $expectedResult = [
             ['id' => 1, 'first_name' => 'Jimbo', 'last_name' => 'Dylan'],
             ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
         ];
 
-        $this->table->where(function($rowId, $row, $table){
+        $this->table->where(function ($rowId, $row, $table) {
 
-            if($row['id'] === 1) {
-                $table->updateRow($rowId, ['first_name'=> 'Jimbo']);
+            if ($row['id'] === 1) {
+                $table->updateRow($rowId, ['first_name' => 'Jimbo']);
             }
 
         });
@@ -214,7 +231,8 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
         $this->assertEquals($expectedResult, $this->table->getRows());
     }
 
-    public function testCanUpdateAllRows() {
+    public function testCanUpdateAllRows()
+    {
 
         $expectedResult = [
             ['id' => 1, 'first_name' => 'joe', 'last_name' => 'Dylan'],
@@ -228,7 +246,8 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
     }
 
-    public function testWillNotUpdateValueIfItIsTheSame() {
+    public function testWillNotUpdateValueIfItIsTheSame()
+    {
 
         $expectedResult = [
             ['id' => 1, 'first_name' => 'Tim', 'last_name' => 'Dylan'],
@@ -248,12 +267,35 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
             'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
         ];
 
-        $this->table->where(function($rowId, $row, $table){
+        $this->table->where(function ($rowId, $row, $table) {
             ($row['last_name'] === 'Dylan') && $table->deleteRow($rowId);
         });
 
         $this->assertEquals($expectedResult, array_values($this->table->getRows())[0]);
-        $this->assertCount(1,$this->table->getRows());
+        $this->assertCount(1, $this->table);
+    }
+
+    public function testCanAddACollectionOfData()
+    {
+        $dataToAdd = [
+            ['id' => 5, 'first_name' => 'James', 'last_name' => 'Hook'],
+            ['id' => 6, 'first_name' => 'Barney', 'last_name' => 'Rubble'],
+            ['id' => 7, 'first_name' => 'Ned', 'last_name' => 'Flanders']
+        ];
+
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'],
+            ['id' => 5, 'first_name' => 'James', 'last_name' => 'Hook'],
+            ['id' => 6, 'first_name' => 'Barney', 'last_name' => 'Rubble'],
+            ['id' => 7, 'first_name' => 'Ned', 'last_name' => 'Flanders']
+        ];
+
+        $this->table->addCollection($dataToAdd);
+
+        $this->assertCount(5, $this->table);
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
+
     }
 }
  

@@ -17,7 +17,6 @@ use JsonSerializable;
  */
 class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable
 {
-
     protected static $keyspace;
 
     protected $tableclass;
@@ -42,7 +41,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function __construct(array $columns, $name = null)
     {
-
         $this->name = $name ? : UUID::v4();
         $this->columns = $columns;
         $this->rows = [];
@@ -63,7 +61,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public static function make(array $columns, $name = null)
     {
-
         return new static($columns, $name);
     }
 
@@ -78,7 +75,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function populate(array $array1, array $array2, array $array3 = null)
     {
-
         $columns = $this->columns;
         $rowData = func_get_args();
 
@@ -111,7 +107,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function updateKeyspace()
     {
-
         if ($this->tableKeyspaceNeedsUpdate()) {
             $this->generateTableKey();
         }
@@ -122,7 +117,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function updateTableClass()
     {
-
         if ($this->tableClassNeedsUpdate()) {
             $this->tableclass = static::getTableClass();
         }
@@ -135,7 +129,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function tableClassNeedsUpdate()
     {
-
         return !isset($this->tableclass);
     }
 
@@ -146,7 +139,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function tableKeyspaceNeedsUpdate()
     {
-
         return !isset(static::$keyspace[$this->tableclass]);
     }
 
@@ -156,7 +148,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function generateTableKey()
     {
-
         static::$keyspace[$this->tableclass] = UUID::v4();
     }
 
@@ -165,7 +156,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected static function getTableClass()
     {
-
         return get_called_class();
     }
 
@@ -176,7 +166,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function generateKey()
     {
-
         $tableRow = $this->tableclass . '.' . $this->name . '_' . str_replace(' ', '', microtime());
 
         $key = UUID::v5(static::$keyspace[$this->tableclass], $tableRow);
@@ -191,8 +180,26 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function setRows(array $rows)
     {
-
         $this->rows = $rows;
+    }
+
+    /**
+     * Adds a collection of data rows to the table
+     *
+     * @param array $collection
+     * @return $this
+     */
+    public function addCollection(array $collection)
+    {
+        // make sure the collection is a multidimensional array
+        foreach ($collection as $row) {
+            if (is_array($row)) {
+                // add data to table
+                $this->fillRowWithData($row);
+            }
+        }
+
+        return $this;
     }
 
     /**
@@ -204,7 +211,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function newRow(array $rowData = [], $rowKey = null)
     {
-
         $this->fillRowWithData($rowData, $rowKey);
 
         return $this;
@@ -306,7 +312,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function updateRow($rowId, array $criteria)
     {
-
         $updatedRow = 0;
         $row = $this->getRowByKey($rowId);
 
@@ -363,7 +368,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function each(Closure $callback)
     {
-
         array_map($callback, $this->rows);
 
         return $this;
@@ -376,7 +380,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function getTableName()
     {
-
         return $this->name;
     }
 
@@ -388,7 +391,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function fillRowWithData(array $rowData = [], $rowKey = null)
     {
-
         // Cut a blank row
         $newRow = $this->newEmptyRow($rowKey);
 
@@ -414,7 +416,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function newEmptyRow($rowKey = null)
     {
-
         $rowKey = $rowKey ? : $this->generateKey();
 
         $this->rows[$rowKey] = array_fill_keys($this->columns, '');
@@ -431,7 +432,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function fillRow($rowKey, array $data)
     {
-
         $row = $this->getRowByKey($rowKey);
 
         if (empty($row) === false) {
@@ -453,7 +453,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function fillRowFromRaw($rowKey, array $data)
     {
-
         $data = array_combine(array_slice($this->columns, 0, count($data)), array_values($data));
 
         $this->fillRow($rowKey, $data);
@@ -466,7 +465,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function getRows()
     {
-
         return $this->rows;
     }
 
@@ -478,7 +476,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function getRowByKey($key)
     {
-
         if ($this->offsetExists($key)) {
             return $this->rows[$key];
         }
@@ -512,7 +509,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     protected function ableToFillRow(array $data)
     {
-
         $result = count($data) <= count($this->columns);
 
         if (!$result) {
@@ -530,7 +526,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function hasColumnKeys(array $data)
     {
-
         return count($data) === count(array_intersect(array_keys($data), $this->columns));
     }
 
@@ -541,7 +536,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function getMetaData()
     {
-
         if (!isset($this->metadata['name'])) {
             $this->metadata['name'] = $this->name;
         }
@@ -556,7 +550,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function exportTable()
     {
-
         return ['metadata' => $this->getMetaData()] + ['columns' => $this->columns] + ['data' => $this->rows];
     }
 
@@ -567,7 +560,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function getIterator()
     {
-
         return new ArrayIterator($this->rows);
     }
 
@@ -578,7 +570,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function count()
     {
-
         return count($this->rows);
     }
 
@@ -590,7 +581,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function offsetExists($key)
     {
-
         return array_key_exists($key, $this->rows);
     }
 
@@ -603,7 +593,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function offsetGet($key)
     {
-
         return $this->rows[$key];
     }
 
@@ -616,7 +605,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function offsetSet($key, $value)
     {
-
         if (is_null($key)) {
             $this->rows[] = $value;
         } else {
@@ -632,7 +620,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function offsetUnset($key)
     {
-
         unset($this->rows[$key]);
     }
 
@@ -644,7 +631,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function toJson($options = 0)
     {
-
         return json_encode($this->exportTable(), $options);
     }
 
@@ -655,7 +641,6 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function jsonSerialize()
     {
-
         return $this->exportTable();
     }
 } 
