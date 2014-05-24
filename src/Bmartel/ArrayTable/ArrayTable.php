@@ -255,8 +255,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     {
         $this->resetSearchResults();
 
-        foreach ($this->rows as $key => $row)
-        {
+        foreach ($this->rows as $key => $row) {
             if (call_user_func($callback, $key, $row, $this)) $this->searchResults[$key] = $row;
         }
 
@@ -270,7 +269,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function get()
     {
-        $results = $this->hasSearched() ? $this->searchResults: $this->rows;
+        $results = $this->hasSearched() ? $this->searchResults : $this->rows;
 
         $this->resetSearchResults();
 
@@ -289,10 +288,10 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
         $rowsUpdated = 0;
 
-        foreach($rowsToUpdate as $key => $value) {
+        foreach ($rowsToUpdate as $key => $value) {
 
             $updatedFields = $this->updateRow($key, $criteria);
-            if((bool) $updatedFields) $rowsUpdated++;
+            if ((bool)$updatedFields) $rowsUpdated++;
         }
 
         return $rowsUpdated;
@@ -305,14 +304,15 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      * @param array $criteria
      * @return int
      */
-    public function updateRow($rowId, array $criteria) {
+    public function updateRow($rowId, array $criteria)
+    {
 
         $updatedRow = 0;
-        $row  = $this->getRowByKey($rowId);
+        $row = $this->getRowByKey($rowId);
 
-        if($row){
+        if ($row) {
             // Ensure the keyed array matches columns found on the table
-            if($this->hasColumnKeys($criteria)) {
+            if ($this->hasColumnKeys($criteria)) {
                 $updatedRow = $this->updateRowFields($rowId, $criteria);
             }
         }
@@ -327,7 +327,8 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      * @param array $fields
      * @return int
      */
-    protected function updateRowFields($rowId, array $fields) {
+    protected function updateRowFields($rowId, array $fields)
+    {
         $oldRowValues = $this->rows[$rowId];
         $this->rows[$rowId] = array_merge($oldRowValues, array_intersect_key($fields, $oldRowValues));
 
@@ -341,7 +342,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function first()
     {
-        return array_slice($this->get(),0,1,true);
+        return array_slice($this->get(), 0, 1, true);
     }
 
     /**
@@ -351,7 +352,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
      */
     public function last()
     {
-        return array_slice(array_reverse($this->get(),true),0,1,true);
+        return array_slice(array_reverse($this->get(), true), 0, 1, true);
     }
 
     /**
@@ -433,7 +434,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
         $row = $this->getRowByKey($rowKey);
 
-        if(empty($row) === false) {
+        if (empty($row) === false) {
             $filled = array_intersect_key($data, $row);
 
             $this->rows[$rowKey] = array_merge($row, $filled);
@@ -488,12 +489,13 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     /**
      * Delete a row from the table
      */
-    public function deleteRow($rowId) {
+    public function deleteRow($rowId)
+    {
         $rowDeleted = false;
 
         $row = $this->getRowByKey($rowId);
 
-        if($row) {
+        if ($row) {
             unset($this->rows[$rowId]);
             $rowDeleted = true;
         }
@@ -656,6 +658,4 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
         return $this->exportTable();
     }
-
-
 } 
