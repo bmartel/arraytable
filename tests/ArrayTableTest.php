@@ -173,15 +173,27 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase {
 
     public function testCanSearchRowsByMultipleFields()
     {
-        $expectedResult = [
-            'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
-        ];
-
         $searchResults = $this->table->where(function($rowId, $row, $table){
             return $row['id'] === 2 || $row['first_name'] === 'Bob';
         })->get();
 
         $this->assertCount(2, $searchResults);
+    }
+
+    public function testCanGetFirstRow() {
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan']
+        ];
+
+        $this->assertEquals($expectedResult, array_values($this->table->first()));
+    }
+
+    public function testCanGetLastRow() {
+        $expectedResult = [
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+        ];
+
+        $this->assertEquals($expectedResult, array_values($this->table->last()));
     }
 
     public function testCanUpdateARow() {
