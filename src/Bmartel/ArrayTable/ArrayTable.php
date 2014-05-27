@@ -31,6 +31,8 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
 
     protected $searchResults;
 
+    protected $rowsDeleted;
+
     protected $searchCriteria;
 
     protected $searchFlag;
@@ -45,6 +47,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         $this->columns = $columns;
         $this->rows = [];
         $this->searchResults = [];
+        $this->rowsDeleted = [];
         $this->searchCriteria = [];
         $this->searchFlag = false;
 
@@ -88,11 +91,14 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         // Reorder the data to take parallel arrays into keyed table rows
         for ($i = 0; $i < count($rowData[0]); $i++) {
             $row = [];
+
             foreach ($rowData as $column) {
                 $row[] = $column[$i];
             }
-            $rows[] = array_combine($columns, $row);
 
+            // Generate a unique row id and assign the field values
+            $rowId = $this->generateKey();
+            $rows[$rowId] = array_combine($columns, $row);
         }
 
         //Overwrite the current table rows
@@ -266,6 +272,78 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         }
 
         return $this;
+    }
+
+    /**
+     * Get the top number of rows from the table or selection query if it exists.
+     *
+     * @param $numRows
+     * @return $this
+     */
+    public function top($numRows)
+    {
+        // Return only the selected number of rows from the top up to a maximum
+        $this->retrieveRowsFromOffset($numRows, 1);
+
+        return $this;
+    }
+
+    /**
+     * Get the bottom number of rows from the table or selection query if it exists.
+     *
+     * @param $numRows
+     * @return $this
+     */
+    public function bottom($numRows)
+    {
+        // Return only the selected number of rows from the bottom up to a maximum
+        $this->retrieveRowsFromOffset($numRows, -1);
+
+        return $this;
+    }
+
+    /**
+     * retrieves rows based on
+     * @param $numRows
+     * @param $direction
+     */
+    protected function retrieveRowsFromOffset($numRows, $direction){
+        // Return only the selected number of rows from the top up to a maximum
+        $rowsToRetrieve = [];
+
+        // Has a previous search been done? Augment that resultset
+        if($this->hasSearched() && empty($this->searchResults) === false) {
+            $rowsToRetrieve = $this->searchResults;
+        }
+
+        // Otherwise attempt to perform the selection on the table rows
+        elseif(empty($this->rows) === false) {
+            $rowsToRetrieve = $this->rows;
+        }
+
+        $this->resetSearchResults();
+
+        // Determine what can be retrieved
+        $availableRows = count($rowsToRetrieve);
+        $maxCanRetrieve = $numRows > $availableRows ? $availableRows: $numRows;
+        $offset = ($direction > 0) ? 0: $maxCanRetrieve * $direction;
+        $maxCanRetrieve = ($direction > 0) ? $maxCanRetrieve : null;
+
+        // Set the search results to what was found
+        $this->searchResults =
+            ($offset === 0 && $availableRows === 0) ?
+                $rowsToRetrieve
+            :array_slice($rowsToRetrieve,$offset,$maxCanRetrieve, true);
+    }
+
+    // Reset the deleted rows history
+    public function clearDeleted(){
+        $this->rowsDeleted = [];
+    }
+
+    // Get the rows which were deleted
+    public function deletedRows(){
+        return $this->rowsDeleted;
     }
 
     /**
@@ -484,6 +562,30 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     }
 
     /**
+     * Deletes rows based on a previous query, or if no query
+     * selection is made, will truncate the table.
+     */
+    public function delete()
+    {
+        $rowsToDelete = [];
+
+        // Delete all rows found within previous search
+        if($this->searchFlag && empty($this->searchResults) === false) {
+            $rowsToDelete = $this->searchResults;
+        }
+
+        // Delete all rows that exist
+        elseif(empty($this->rows) === false){
+            $rowsToDelete = $this->rows;
+        }
+
+        // Perform the delete on the rows
+        foreach($rowsToDelete as $rowId => $row) {
+            $this->deleteRow($rowId);
+        }
+    }
+
+    /**
      * Delete a row from the table
      */
     public function deleteRow($rowId)
@@ -493,6 +595,10 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
         $row = $this->getRowByKey($rowId);
 
         if ($row) {
+            // Store a reference to the deleted row
+            $this->rowsDeleted[] = $row;
+
+            // Delete the row
             unset($this->rows[$rowId]);
             $rowDeleted = true;
         }

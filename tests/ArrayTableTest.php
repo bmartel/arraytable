@@ -152,7 +152,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
             ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
         ];
 
-        $this->assertEquals($expectedResult, $this->table->getRows());
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
     }
 
     /**
@@ -228,7 +228,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
 
         });
 
-        $this->assertEquals($expectedResult, $this->table->getRows());
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
     }
 
     public function testCanUpdateAllRows()
@@ -242,7 +242,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
         $updated = $this->table->updateAll(['first_name' => 'joe']);
 
         $this->assertEquals(2, $updated);
-        $this->assertEquals($expectedResult, $this->table->getRows());
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
 
     }
 
@@ -257,7 +257,7 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
         $updated = $this->table->updateAll(['first_name' => 'Tim']);
 
         $this->assertEquals(1, $updated);
-        $this->assertEquals($expectedResult, $this->table->getRows());
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
 
     }
 
@@ -273,6 +273,22 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($expectedResult, array_values($this->table->getRows())[0]);
         $this->assertCount(1, $this->table);
+    }
+
+    public function testCanDeleteRowsByQuerySelection()
+    {
+        $expectedResult = [
+            'id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw'
+        ];
+
+        $this->table->where(function($rowId,$row,$table){
+            return $row['id'] === 1;
+        })->delete();
+
+        $this->assertEquals($expectedResult, array_values($this->table->getRows())[0]);
+        $this->assertCount(1, $this->table);
+        $this->assertCount(1, $this->table->deletedRows());
+
     }
 
     public function testCanAddACollectionOfData()
@@ -296,6 +312,74 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
         $this->assertCount(5, $this->table);
         $this->assertEquals($expectedResult, array_values($this->table->getRows()));
 
+    }
+
+    public function testCanGetTopRows() {
+        $expectedResult = [['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan']];
+
+        $row = $this->table->top(1)->get();
+
+        $this->assertEquals($expectedResult, array_values($row));
+    }
+
+    public function testCanGetBottomRows() {
+        $expectedResult = [['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']];
+
+        $row = $this->table->bottom(1)->get();
+
+        $this->assertEquals($expectedResult, array_values($row));
+    }
+
+    public function testCanDeleteBottomRow(){
+        $expectedResult = [['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan']];
+
+        $this->table->bottom(1)->delete();
+
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
+    }
+
+    public function testCanDeleteTopRow(){
+        $expectedResult = [['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']];
+
+        $this->table->top(1)->delete();
+
+        $this->assertEquals($expectedResult, array_values($this->table->getRows()));
+    }
+
+    public function testCanUseTopWithWhereClause(){
+        $dataToAdd = [
+            ['id' => 5, 'first_name' => 'James', 'last_name' => 'Hook'],
+            ['id' => 6, 'first_name' => 'James', 'last_name' => 'Rubble'],
+            ['id' => 7, 'first_name' => 'Ned', 'last_name' => 'Flanders']
+        ];
+
+        $expectedResult = [['id' => 5, 'first_name' => 'James', 'last_name' => 'Hook']];
+
+        $this->table->addCollection($dataToAdd);
+
+        $rows = $this->table->where(function($rowId, $row, $table){
+            return $row['first_name'] === 'James';
+        })->top(1)->get();
+
+        $this->assertEquals($expectedResult, array_values($rows));
+    }
+
+    public function testCanUseBottomWithWhereClause(){
+        $dataToAdd = [
+            ['id' => 5, 'first_name' => 'James', 'last_name' => 'Hook'],
+            ['id' => 6, 'first_name' => 'James', 'last_name' => 'Rubble'],
+            ['id' => 7, 'first_name' => 'Ned', 'last_name' => 'Flanders']
+        ];
+
+        $expectedResult = [['id' => 6, 'first_name' => 'James', 'last_name' => 'Rubble']];
+
+        $this->table->addCollection($dataToAdd);
+
+        $rows = $this->table->where(function($rowId, $row, $table){
+            return $row['first_name'] === 'James';
+        })->bottom(1)->get();
+
+        $this->assertEquals($expectedResult, array_values($rows));
     }
 }
  
