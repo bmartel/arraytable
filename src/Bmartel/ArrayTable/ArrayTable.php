@@ -1,6 +1,9 @@
 <?php namespace Bmartel\ArrayTable;
 
+use Bmartel\ArrayTable\Contracts\json;
+use Bmartel\ArrayTable\Contracts\SignatureInterface;
 use Bmartel\ArrayTable\Exceptions\RowDataException;
+use Bmartel\ArrayTable\Traits\Signature;
 use Closure;
 use Countable;
 use ArrayAccess;
@@ -15,11 +18,15 @@ use JsonSerializable;
  *
  * @package Bmartel\ArrayTable
  */
-class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable
+class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable, SignatureInterface
 {
+    use Signature;
+
     protected static $keyspace;
 
     protected $tableclass;
+
+    protected $signature;
 
     protected $rows;
 
@@ -44,7 +51,7 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     public function __construct(array $columns, $name = null)
     {
         $this->name = $name ? : UUID::v4();
-        $this->columns = $columns;
+        $this->setColumns($columns);
         $this->rows = [];
         $this->searchResults = [];
         $this->rowsDeleted = [];
@@ -66,6 +73,28 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     {
         return new static($columns, $name);
     }
+
+    /**
+     * This method must return some form of data, collection, or object
+     * for which the signature can be generated from.
+     *
+     * @return mixed
+     */
+    public function definition()
+    {
+        return $this->columns;
+    }
+
+    /**
+     * Returns the current signature
+     *
+     * @return mixed
+     */
+    public function signature()
+    {
+        $this->signature;
+    }
+
 
     /**
      * Populates array table with parallel arrays, overwrites current rows
@@ -748,5 +777,11 @@ class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSeria
     public function jsonSerialize()
     {
         return $this->exportTable();
+    }
+
+    private function setColumns($columns)
+    {
+        $this->columns = $columns;
+        $this->generateSignature();
     }
 } 

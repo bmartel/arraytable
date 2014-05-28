@@ -381,5 +381,18 @@ class ArrayTableTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals($expectedResult, array_values($rows));
     }
+
+    public function testCanIterateAnArrayTable()
+    {
+        $expectedResult = [
+            ['id' => 1, 'first_name' => 'Bob', 'last_name' => 'Dylan'],
+            ['id' => 2, 'first_name' => 'Tim', 'last_name' => 'Mcgraw']
+        ];
+
+        foreach($this->table as $row) {
+
+            $this->assertEquals($expectedResult[$row['id'] -1], $row);
+        }
+    }
 }
  
