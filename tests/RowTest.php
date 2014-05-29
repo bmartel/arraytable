@@ -33,12 +33,6 @@ class RowTest extends \PHPUnit_Framework_TestCase{
         $this->assertAttributeNotEmpty('signature', $this->row);
     }
 
-    public function testThrowsExceptionIfRowHasNoColumns() {
-        $this->setExpectedException('Bmartel\ArrayTable\Exceptions\ColumnsNotDefinedException');
-
-        $newRow = new Row();
-    }
-
     public function testSignaturesGeneratedAreAlwaysTheSameForSameColumnData(){
         $newRow = new Row($this->columns);
 

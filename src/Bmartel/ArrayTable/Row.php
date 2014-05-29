@@ -60,11 +60,6 @@ class Row implements SignatureInterface, ArrayInterface
             }
         }
 
-        // Are the columns set?
-        if (empty($this->columns)) {
-            throw new ColumnsNotDefinedException('Row object must define an array of columns.');
-        }
-
         // Generate a signature for this rows columns
         $this->signature = $this->generateSignature();
     }
