@@ -14,8 +14,6 @@ use JsonSerializable;
 /**
  * Class ArrayTable
  *
- * Simple table like data structure
- *
  * @package Bmartel\ArrayTable
  */
 class ArrayTable implements ArrayAccess, Countable, IteratorAggregate, JsonSerializable, SignatureInterface
